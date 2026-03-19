@@ -179,7 +179,7 @@ namespace heaton {
         if (entry->level == LogLevel::LL_FATAL) {
             _g_target->apply_log(entry.get());
             stop_work();
-            std::terminate();
+            return;
         }
         std::unique_lock<std::mutex> lock(_mutex);
         if (!_running) {
@@ -201,19 +201,24 @@ namespace heaton {
             sink->_start_cond.notify_one();
         }
         std::deque<std::unique_ptr<LogEntity> > log_entities;
-        while (sink->_running) {
+        static const size_t kDefaultWait = 5;
+        while (sink->_running.load()) {
             {
                 std::unique_lock lk(sink->_mutex);
-                sink->_cond.wait(lk);
+                while (sink->_log_entities.empty() && sink->_running.load()) {
+                    auto ws = sink->_options.flush_interval_s > 0 ? sink->_options.flush_interval_s : kDefaultWait;
+                    auto dl = turbo::Time::current_time() + turbo::Duration::seconds(ws);
+                    sink->_cond.wait_until(lk, turbo::Time::to_chrono(dl));
+                }
                 log_entities.swap(sink->_log_entities);
             }
-
             for (auto &entity: log_entities) {
                 sink->_g_target->apply_log(entity.get());
                 auto target = sink->_file_target[static_cast<int>(entity->level)];
                 target->apply_log(entity.get());
             }
             log_entities.clear();
+
         }
 
         {

@@ -72,6 +72,7 @@ namespace heaton {
         FileTargetOptions global_option;
         std::vector<FileTargetOptions> targets;
         size_t max_queue_length{4096};
+        size_t flush_interval_s{10};
     };
 
     class FileTargetBase {
