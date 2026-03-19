@@ -20,6 +20,8 @@
 #include <turbo/utility/status.h>
 #include <turbo/times/time.h>
 #include <heaton/log_entity.h>
+#include <turbo/log/internal/append_file.h>
+#include <heaton/utility/log_filename.h>
 
 namespace heaton {
 
@@ -53,6 +55,8 @@ namespace heaton {
         size_t max_total_size{0};
         /// timezone for filename, default as local, eg "local", "utc"
         std::string timezone{"local"};
+        /// try reopen file when fail on open file
+        size_t reopen_interval_s{3};
     };
 
     struct FileSinkOptions {
@@ -72,6 +76,8 @@ namespace heaton {
 
     class FileTargetBase {
     public:
+
+        static const turbo::Time kZero;
         virtual ~FileTargetBase() = default;
 
         virtual turbo::Status initialize(const FileTargetOptions &base) = 0;
@@ -89,5 +95,22 @@ namespace heaton {
         }
 
         virtual void flush() {}
+
+    protected:
+        void reopen_writer(turbo::Time stamp);
+        void check_file(turbo::Time stamp);
+
+        turbo::Time next_check_time(turbo::Time stamp) const;
+
+    protected:
+        FileTargetOptions _options;
+        turbo::Time _next_reopen_time;
+        turbo::TimeZone _timezone;
+        std::unique_ptr<turbo::FileWriter> _file_writer;
+        BaseFilename _base_filename;
+
+        turbo::Time _next_check_time;
+        size_t      _current_items{0};
+        bool shutting_down{false};
     };
 } // namespace heaton

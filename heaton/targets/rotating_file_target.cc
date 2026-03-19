@@ -48,41 +48,30 @@ namespace heaton {
 
         _file_writer = std::make_unique<turbo::log_internal::AppendFile>();
 
-        _file_writer->initialize(filename);
+        if (_file_writer->initialize(filename) != 0) {
+            _file_writer.reset();
+            return turbo::invalid_argument_error("failed to initialize AppendFile");
+        }
         return turbo::OkStatus();
     }
 
     void RotatingFileTarget::apply_log(LogLevel l, turbo::Time stamp, const char *data, size_t len) {
-        if (_file_writer == nullptr || shutting_down) {
+        if (shutting_down) {
             return;
         }
         rotate_file(stamp, len);
+        if (_file_writer == nullptr) {
+            return;
+        }
         _file_writer->write(std::string_view(data, len));
         ++_current_items;
     }
 
-    void RotatingFileTarget::check_file(turbo::Time stamp) {
-        if (_file_writer == nullptr) {
-            return;
-        }
-
-        if (_options.check_interval_s == 0 &&
-            _options.check_items == 0) {
-            return;
-        }
-
-        if (stamp < _next_check_time && _current_items < _options.check_items) {
-            return;
-        }
-        _next_check_time = next_check_time(stamp);
-        _current_items = 0;
-        _file_writer->reopen();
-    }
 
     void RotatingFileTarget::rotate_file(turbo::Time stamp, size_t delta) {
         check_file(stamp);
 
-        if (_options.max_file_size == 0) {
+        if (_options.max_file_size == 0 || _file_writer == nullptr) {
             return;
         }
 
@@ -99,14 +88,8 @@ namespace heaton {
 
             rename_file(src, target);
         }
-        _file_writer->reopen();
-    }
-
-    turbo::Time RotatingFileTarget::next_check_time(turbo::Time stamp) const {
-        if (_options.check_interval_s == 0) {
-            return turbo::Time::from_time_t(0);
-        }
-        return stamp + turbo::Duration::seconds(_options.check_interval_s);
+        _file_writer.reset();
+        reopen_writer(stamp);
     }
 
     void RotatingFileTarget::flush() {

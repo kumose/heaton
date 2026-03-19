@@ -17,13 +17,10 @@
 
 #include <heaton/file_target_base.h>
 #include <turbo/times/time.h>
-#include <turbo/log/internal/append_file.h>
 #include <turbo/container/circular_queue.h>
 #include <heaton/utility/log_filename.h>
 
 namespace heaton {
-
-
     /// leave the multi thread gard for caller sinks proxy eg turbo,glog, absl.
     class HourlyFileTarget : public FileTargetBase {
     public:
@@ -42,22 +39,15 @@ namespace heaton {
             return turbo::Status();
         }
 
-
     private:
         turbo::Time next_rotation_time(turbo::Time stamp) const;
-        turbo::Time next_check_time(turbo::Time stamp) const;
+
         void init_file_queue(turbo::Time time);
+
         void rotate_file(turbo::Time stamp);
-        void check_file(turbo::Time stamp);
+
     private:
-        FileTargetOptions _options;
-        BaseFilename _base_filename;
-        turbo::Time _next_check_time;
         turbo::Time _next_rotation_time;
-        size_t      _current_items{0};
         turbo::circular_queue<std::string> _files;
-        std::unique_ptr<turbo::FileWriter> _file_writer;
-        turbo::TimeZone _timezone;
-        bool shutting_down{false};
     };
-}  // namespace heaton
+} // namespace heaton
