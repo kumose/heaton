@@ -14,7 +14,7 @@ heaton
 [中文版](./README_CN.md)
 
 
-heaton Project Description
+heaton log proxy for logs to the sinks.
 
 ## 🛠️ Build
 
@@ -67,4 +67,30 @@ Run in the project root directory:
 
 ```shell
 ctest --test-dir build
+```
+
+## examples
+
+```c++
+
+#include <heaton/sink.h>
+#include <heaton/glog.h>
+#include <turbo/log/logging.h>
+
+int main(int argc, char **argv) {
+    heaton::SinkOption option(argv[0]);
+    option.type = heaton::SinkType::SINK_ASYNC_FILE;
+    option.create_if_missing = true;
+    option.options.global_option.log_type = heaton::TargetType::TARGET_DAILY;
+    option.options.global_option.filename = "logs/tlog.txt";
+    auto rs = heaton::SinkProxy::get_instance()->initialize(option);
+    std::cerr<<rs.to_string()<<std::endl;
+    if (!rs.ok()) {
+        return 1;
+    }
+    ABSL_LOG(INFO)<<"absl log";
+    KLOG(INFO)<<"turbo log";
+    LOG(INFO)<<"glog log";
+    return 0;
+}
 ```

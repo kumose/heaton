@@ -1,4 +1,4 @@
-# Copyright (C) Kumo inc. and its affiliates.
+# Copyright (C) 2026 Kumo inc. and its affiliates.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,42 +16,32 @@
 # below are examples, after initialization, modify it to your own.
 ###########################################################################
 ###kmcmake_example
+
+set(HEATON_SRC
+        log_entity.cc
+        file_target_base.cc
+        heaton.cc
+        sink.cc
+        sinks/color_sink.cc
+        sinks/file_sink.cc
+        sinks/async_file_sink.cc
+        targets/console_target.cc
+        targets/daily_file_target.cc
+        targets/hourly_file_target.cc
+        targets/rotating_file_target.cc
+        utility/log_filename.cc
+)
+
 kmcmake_cc_library(
         NAMESPACE ${PROJECT_NAME}
-        NAME foo
+        NAME heaton
         SOURCES
-        foo.cc
+        ${HEATON_SRC}
         CXXOPTS
         ${KMCMAKE_CXX_OPTIONS}
         PLINKS
         ${KMCMAKE_DEPS_LINK}
         PUBLIC
 )
-
-kmcmake_cc_interface(
-        NAMESPACE ${PROJECT_NAME}
-        NAME api
-        HEADERS
-        api.h
-        CXXOPTS
-        ${KMCMAKE_CXX_OPTIONS}
-        PUBLIC
-)
-
-kmcmake_cc_binary(
-        NAMESPACE ${PROJECT_NAME}
-        NAME shared_main
-        SOURCES
-        main.cc
-        CXXOPTS
-        ${KMCMAKE_CXX_OPTIONS}
-        DEPS
-        ${PROJECT_NAME}::foo
-        LINKS
-        ${KMCMAKE_DEPS_LINK}
-        ${PROJECT_NAME}::foo
-        PUBLIC
-)
-
 
 ###kmcmake_example

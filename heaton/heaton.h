@@ -13,9 +13,8 @@
 // limitations under the License.
 //
 
-#include <gtest/gtest.h>
-#include <heaton/foo.h>
+#pragma once
 
-TEST(tt, foo) {
-    EXPECT_EQ(2, foo(1));
-}
+namespace heaton {
+
+}  // namespace heaton

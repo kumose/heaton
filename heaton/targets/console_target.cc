@@ -13,6 +13,14 @@
 // limitations under the License.
 //
 
-#pragma once
+#include <heaton/targets/console_target.h>
 
-inline int sub(int a, int b) { return a - b; }
+namespace heaton {
+
+    void ConsoleTargetBase::apply_log(LogLevel l, turbo::Time stamp, const char *data, size_t len) {
+        std::unique_lock lk(_mutex);
+        TURBO_UNUSED(::fwrite(data, 1, len, _file));
+    }
+
+}  // namespace heaton
+
