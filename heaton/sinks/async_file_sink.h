@@ -139,7 +139,7 @@ namespace heaton {
         std::deque<std::unique_ptr<LogEntity>> _log_entities;
         FileSinkOptions _options;
         std::unique_ptr<std::thread> _thread{nullptr};
-        bool _running{true};
+        std::atomic<bool> _running{true};
 
         std::mutex _start_mutex;
         std::condition_variable _start_cond;
