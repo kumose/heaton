@@ -14,7 +14,68 @@
 //
 
 #include <heaton/file_target_base.h>
+#include <turbo/files/filesystem.h>
+
 
 namespace heaton {
+
+    const turbo::Time FileTargetBase::kZero;
+
+    void FileTargetBase::reopen_writer(turbo::Time stamp) {
+        auto now = turbo::Time::current_time();
+        if (_next_reopen_time != kZero && now < _next_reopen_time) {
+            return;
+        }
+
+        if (_next_reopen_time != kZero) {
+            BaseFilename fn(_options.filename);
+            TURBO_UNUSED(turbo::create_directories(fn.directory));
+            auto e  = turbo::is_directory(fn.directory);
+            if (!e.ok() || !e.value_or_die()) {
+                _next_reopen_time = now + turbo::Duration::seconds(_options.reopen_interval_s);
+                return;
+            }
+        }
+        auto filename = HourlyLogFilename::make_path(stamp, _timezone, _base_filename);
+        _file_writer = std::make_unique<turbo::log_internal::AppendFile>();
+        if (_file_writer->initialize(filename) != 0) {
+            _file_writer.reset();
+            _next_reopen_time = now + turbo::Duration::seconds(_options.reopen_interval_s);
+            return;
+        }
+        _next_reopen_time = turbo::Time();
+    }
+
+    void FileTargetBase::check_file(turbo::Time stamp) {
+        bool need_reopen = true;
+        if (_file_writer == nullptr) {
+            reopen_writer(stamp);
+            if (!_file_writer) {
+                return;
+            }
+            need_reopen = false;
+        }
+
+        if (_options.check_interval_s == 0 &&
+            _options.check_items == 0) {
+            return;
+            }
+
+        if (stamp < _next_check_time && _current_items < _options.check_items) {
+            return;
+        }
+        _next_check_time = next_check_time(stamp);
+        _current_items = 0;
+        if (need_reopen) {
+            _file_writer->reopen();
+        }
+    }
+
+    turbo::Time FileTargetBase::next_check_time(turbo::Time stamp) const {
+        if (_options.check_interval_s == 0) {
+            return turbo::Time::from_time_t(0);
+        }
+        return stamp + turbo::Duration::seconds(_options.check_interval_s);
+    }
 
 }  // namespace heaton

@@ -17,6 +17,7 @@
 #include <turbo/log/internal/fs_helper.h>
 #include <turbo/log/internal/globals.h>
 #include <turbo/strings/match.h>
+#include <turbo/files/filesystem.h>
 
 namespace heaton {
     DailyFileTarget::DailyFileTarget() : FileTargetBase() {
@@ -51,15 +52,21 @@ namespace heaton {
 
         _file_writer = std::make_unique<turbo::log_internal::AppendFile>();
 
-        _file_writer->initialize(filename);
+        if (_file_writer->initialize(filename) != 0) {
+            _file_writer.reset();
+            return turbo::invalid_argument_error("open writer failed");
+        }
         return turbo::OkStatus();
     }
 
     void DailyFileTarget::apply_log(LogLevel l, turbo::Time stamp, const char *data, size_t len) {
-        if (_file_writer == nullptr || shutting_down) {
+        if (shutting_down) {
             return;
         }
         rotate_file(stamp);
+        if (_file_writer == nullptr) {
+            return;
+        }
         _file_writer->write(std::string_view(data, len));
         ++_current_items;
     }
@@ -80,23 +87,6 @@ namespace heaton {
         }
     }
 
-    void DailyFileTarget::check_file(turbo::Time stamp) {
-        if (_file_writer == nullptr) {
-            return;
-        }
-
-        if (_options.check_interval_s == 0 &&
-            _options.check_items == 0) {
-            return;
-        }
-
-        if (stamp < _next_check_time && _current_items < _options.check_items) {
-            return;
-        }
-        _next_check_time = next_check_time(stamp);
-        _current_items = 0;
-        _file_writer->reopen();
-    }
 
     void DailyFileTarget::rotate_file(turbo::Time stamp) {
         check_file(stamp);
@@ -107,8 +97,10 @@ namespace heaton {
         auto filename = DailyLogFilename::make_path(stamp, _timezone, _base_filename);
         _file_writer->close();
         _file_writer.reset();
-        _file_writer = std::make_unique<turbo::log_internal::AppendFile>();
-        _file_writer->initialize(filename);
+        reopen_writer(stamp);
+        if (!_file_writer) {
+            return;
+        }
         if (_options.max_files == 0) {
             return;
         }
@@ -135,13 +127,6 @@ namespace heaton {
             return rotation_time;
         }
         return rotation_time + turbo::Duration::hours(24);
-    }
-
-    turbo::Time DailyFileTarget::next_check_time(turbo::Time stamp) const {
-        if (_options.check_interval_s == 0) {
-            return turbo::Time::from_time_t(0);
-        }
-        return stamp + turbo::Duration::seconds(_options.check_interval_s);
     }
 
     void DailyFileTarget::flush() {

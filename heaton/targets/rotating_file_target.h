@@ -44,18 +44,8 @@ namespace heaton {
 
 
     private:
-        turbo::Time next_check_time(turbo::Time stamp) const;
         void rotate_file(turbo::Time stamp, size_t delta);
-        void check_file(turbo::Time stamp);
 
         static bool rename_file(const std::string &src_filename, const std::string &target_filename);
-    private:
-        FileTargetOptions _options;
-        BaseFilename _base_filename;
-        turbo::Time _next_check_time;
-        size_t      _current_items{0};
-        std::unique_ptr<turbo::FileWriter> _file_writer;
-        turbo::TimeZone _timezone;
-        bool shutting_down{false};
     };
 }  // namespace heaton
