@@ -13,10 +13,8 @@
 // limitations under the License.
 //
 
-#include <heaton/foo.h>
-#include <iostream>
+#include <heaton/file_target_base.h>
 
-int main() {
-    std::cout<<foo( 10)<<std::endl;
-    return 0;
-}
+namespace heaton {
+
+}  // namespace heaton

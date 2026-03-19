@@ -12,18 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-#include <signal.h>
-#include <stdio.h>
 
-int main(int argc, char**argv)
-{
-    if(argc !=2) {
-        fprintf(stdout, "Failed\n");
-        fflush(stdout);  /* ensure the output buffer is seen */
-        return 0;
-    }
-    fprintf(stdout, "%s\n", argv[1]);
-    fflush(stdout);  /* ensure the output buffer is seen */
-    //raise(SIGABRT);
-    return 0;
-}
+#include <heaton/heaton.h>
+
+namespace heaton {
+
+}  // namespace heaton

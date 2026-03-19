@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <heaton/log_entity.h>
 
-#include <doctest/doctest.h>
-#include <heaton/foo.h>
+namespace heaton {
 
-TEST_CASE("foo") {
-    CHECK_EQ(foo(1), 2);
-}
+    LogEntity::LogEntity(LogLevel l, turbo::Time t, std::string &&m)
+        : level(l), stamp(t), message(std::move(m)) {
+    }
+} // namespace heaton

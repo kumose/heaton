@@ -14,13 +14,16 @@
 //
 
 
-#include <signal.h>
-#include <stdio.h>
+#include <heaton/targets/file_target.h>
 
-int main()
-{
-    fprintf(stdout, "Passed\n");
-    fflush(stdout);  /* ensure the output buffer is seen */
-    //raise(SIGABRT);
-    return 0;
-}
+namespace heaton {
+
+    void FileTarget::apply_log(LogLevel l, turbo::Time stamp, const char *data, size_t len) {
+        rotate_file(stamp);
+        if (_file_writer == nullptr) {
+            return;
+        }
+        // Write to the current file
+        _file_writer->write(std::string_view(data, len));
+    }
+}  // namespace heaton

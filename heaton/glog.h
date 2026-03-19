@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-#include <heaton/foo.h>
 
-int foo(int a) {
-    return  a +1;
-}
+#pragma once
+
+#ifndef GLOG_USE_GLOG_EXPORT
+#define GLOG_USE_GLOG_EXPORT
+#endif
+
+#include <glog/logging.h>
