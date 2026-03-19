@@ -71,6 +71,7 @@ ctest --test-dir build
 
 ## examples
 
+`SinkProxy` should be initialize at the begin of system running.
 ```c++
 
 #include <heaton/sink.h>
