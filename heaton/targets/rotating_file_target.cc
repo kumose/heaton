@@ -19,7 +19,7 @@
 #include <turbo/strings/match.h>
 
 namespace heaton {
-    RotatingFileTarget::RotatingFileTarget() : FileTargetBase() {
+    RotatingFileTarget::RotatingFileTarget() : TargetBase() {
     }
 
     RotatingFileTarget::~RotatingFileTarget() {
@@ -28,7 +28,7 @@ namespace heaton {
         }
     }
 
-    turbo::Status RotatingFileTarget::initialize(const FileTargetOptions &base) {
+    turbo::Status RotatingFileTarget::initialize(const TargetOptions &base) {
         _options = base;
         if (base.filename.empty()) {
             return turbo::invalid_argument_error("base file name is required");

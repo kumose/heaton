@@ -16,6 +16,25 @@ heaton
 
 heaton log proxy for logs to the sinks.
 
+```mermaid
+flowchart LR
+    A[APP] --> B[GLOG transfer]
+    A[APP] --> C[ABSL transfer]
+    A[APP] --> D[TURBO transfer]
+    B --> E[dispatcher]
+    C --> E[dispatcher]
+    D --> E[dispatcher]
+    E -->|INFO| GS[sink/async]
+    E -->|WARN| GS
+    E -->|ERROR| GS
+    E -->|FATAL| GS
+    E -->|ERROR| ES[error]
+    E -->|FATAL| ES[error]
+    GS -->|console| CT[target]
+    GS -->|file| FT[target]
+    GS -->|kafka| KT[target]
+```
+
 ## 🛠️ Build
 
 This project uses [kmpkg](https://github.com/kumose/kmcmake) for dependency management and build integration.

@@ -28,13 +28,17 @@ namespace heaton {
     enum class TargetType {
         /// null sink, do nothing
         TARGET_NULL = 0,
-        TARGET_DAILY = 1,
-        TARGET_HOURLY = 2,
-        TARGET_ROTATING = 3
+        TARGET_STDERR = 1,
+        TARGET_STDOUT = 2,
+        TARGET_COLOR_STDERR = 3,
+        TARGET_COLOR_STDOUT = 4,
+        TARGET_DAILY = 5,
+        TARGET_HOURLY = 6,
+        TARGET_ROTATING = 7
     };
 
-    struct FileTargetOptions {
-        TargetType log_type{TargetType::TARGET_NULL};
+    struct TargetOptions {
+        TargetType target_type{TargetType::TARGET_NULL};
         /// log base name
         std::string filename;
 
@@ -59,29 +63,13 @@ namespace heaton {
         size_t reopen_interval_s{3};
     };
 
-    struct FileSinkOptions {
-        FileSinkOptions() {
-            targets.resize(4);
-            for (auto &target : targets) {
-                target.log_type = TargetType::TARGET_NULL;
-            }
-        }
-        bool enable_turbo{true};
-        bool enable_glog{true};
-        bool enable_absl{true};
-        FileTargetOptions global_option;
-        std::vector<FileTargetOptions> targets;
-        size_t max_queue_length{4096};
-        size_t flush_interval_s{10};
-    };
-
-    class FileTargetBase {
+    class TargetBase {
     public:
 
         static const turbo::Time kZero;
-        virtual ~FileTargetBase() = default;
+        virtual ~TargetBase() = default;
 
-        virtual turbo::Status initialize(const FileTargetOptions &base) = 0;
+        virtual turbo::Status initialize(const TargetOptions &base) = 0;
 
         virtual turbo::Status shutdown() = 0;
 
@@ -97,6 +85,8 @@ namespace heaton {
 
         virtual void flush() {}
 
+        static turbo::Result<std::shared_ptr<TargetBase>> create_target(TargetOptions option);
+
     protected:
         void reopen_writer(turbo::Time stamp);
         void check_file(turbo::Time stamp);
@@ -104,7 +94,7 @@ namespace heaton {
         turbo::Time next_check_time(turbo::Time stamp) const;
 
     protected:
-        FileTargetOptions _options;
+        TargetOptions _options;
         turbo::Time _next_reopen_time;
         turbo::TimeZone _timezone;
         std::unique_ptr<turbo::FileWriter> _file_writer;

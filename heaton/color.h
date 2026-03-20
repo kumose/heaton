@@ -15,17 +15,11 @@
 
 #pragma once
 
-#include <string_view>
-#include <array>
 #include <turbo/log/logging.h>
-#include <turbo/log/log_sink.h>
-#include <absl/log/log_sink.h>
-#include <heaton/file_target_base.h>
-#include <heaton/glog.h>
-#include <heaton/targets/console_target.h>
 
 namespace heaton {
-    class ConsoleColor {
+
+     class ConsoleColor {
     public:
         // Formatting codes
         static constexpr std::string_view reset = "\033[m";
@@ -77,104 +71,4 @@ namespace heaton {
         static std::array<std::string_view, 10> colors_map;
     };
 
-
-    class TurboColorSink : public turbo::LogSink {
-    public:
-        /// target must be not nullptr.
-        TurboColorSink(FileTargetBase *target) : _file_target(target) {
-            KCHECK(_file_target);
-        }
-
-        ~TurboColorSink() override {
-        }
-
-        void Send(const turbo::LogEntry &entry) override;
-
-        void Flush() override {
-        }
-
-    private:
-        FileTargetBase *_file_target{nullptr};
-    };
-
-    class AbslColorSink : public absl::LogSink {
-    public:
-        /// target must be not nullptr.
-        AbslColorSink(FileTargetBase *target) : _file_target(target) {
-            KCHECK(_file_target);
-        }
-
-        ~AbslColorSink() override {
-        }
-
-        void Send(const absl::LogEntry &entry) override;
-
-        void Flush() override {
-        }
-
-    private:
-        FileTargetBase *_file_target{nullptr};
-    };
-
-    class GlogColorSink : public google::LogSink {
-    public:
-        /// target must be not nullptr.
-        GlogColorSink(FileTargetBase *target) : _file_target(target) {
-            KCHECK(_file_target);
-        }
-
-        ~GlogColorSink() override {
-        }
-
-        void send(google::LogSeverity severity, const char *full_filename,
-                  const char *base_filename, int line, const google::LogMessageTime &time,
-                  const char *message, size_t message_len) override;
-
-    private:
-        FileTargetBase *_file_target{nullptr};
-    };
-
-    class ColorSinkBase {
-    public:
-        ColorSinkBase(FileTargetBase *target);
-
-        virtual ~ColorSinkBase() = default;
-
-        void initialize(bool turbo = true, bool absl = true, bool glog = true);
-
-        void shutdown();
-
-    private:
-        TurboColorSink turbo_color_sink;
-        AbslColorSink absl_color_sink;
-        GlogColorSink glog_color_sink;
-
-        bool _turbo{false};
-        bool _absl{false};
-        bool _glog{false};
-    };
-
-    class StderrColorSink : public ColorSinkBase {
-    public:
-        StderrColorSink() : ColorSinkBase(&console_sink) {
-        }
-
-        ~StderrColorSink() override {
-        }
-
-    private:
-        ConsoleSinkStderr console_sink;
-    };
-
-    class StdoutColorSink : public ColorSinkBase {
-    public:
-        StdoutColorSink() : ColorSinkBase(&console_sink) {
-        }
-
-        ~StdoutColorSink() override {
-        }
-
-    private:
-        ConsoleSinkStdout console_sink;
-    };
-} // namespace heaton
+}  // namespace heaton

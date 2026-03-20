@@ -20,7 +20,7 @@
 #include <turbo/files/filesystem.h>
 
 namespace heaton {
-    DailyFileTarget::DailyFileTarget() : FileTargetBase() {
+    DailyFileTarget::DailyFileTarget() : TargetBase() {
     }
 
     DailyFileTarget::~DailyFileTarget() {
@@ -29,7 +29,7 @@ namespace heaton {
         }
     }
 
-    turbo::Status DailyFileTarget::initialize(const FileTargetOptions &base) {
+    turbo::Status DailyFileTarget::initialize(const TargetOptions &base) {
         _options = base;
         if (base.filename.empty()) {
             return turbo::invalid_argument_error("base file name is required");

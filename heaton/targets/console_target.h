@@ -16,18 +16,18 @@
 #pragma once
 
 #include <mutex>
-#include <heaton/file_target_base.h>
+#include <heaton/target_base.h>
 #include <cstdio>
 
 namespace heaton {
-    class ConsoleTargetBase : public FileTargetBase {
+    class ConsoleTargetBase : public TargetBase {
     public:
         ConsoleTargetBase(FILE *file) : _file{file} {
         }
 
         ~ConsoleTargetBase() override = default;
 
-        turbo::Status initialize(const FileTargetOptions &base) override {
+        turbo::Status initialize(const TargetOptions &base) override {
             TURBO_UNUSED(base);
             return turbo::OkStatus();
         }
@@ -40,23 +40,80 @@ namespace heaton {
 
     private:
         FILE *_file{nullptr};
-        std::mutex _mutex;
     };
 
-    class ConsoleSinkStdout : public ConsoleTargetBase {
+    class ConsoleTargetStdout : public ConsoleTargetBase {
     public:
-        ConsoleSinkStdout() : ConsoleTargetBase(stdout) {
+        ConsoleTargetStdout() : ConsoleTargetBase(stdout) {
         }
 
-        ~ConsoleSinkStdout() override = default;
+        ~ConsoleTargetStdout() override = default;
+
+        static std::shared_ptr<TargetBase> create() {
+            static std::shared_ptr<TargetBase> sink(new(std::nothrow) ConsoleTargetStdout());
+            return sink;
+        }
+
     };
 
-    class ConsoleSinkStderr : public ConsoleTargetBase {
+    class ConsoleTargetStderr : public ConsoleTargetBase {
     public:
-        ConsoleSinkStderr() : ConsoleTargetBase(stderr) {
+        ConsoleTargetStderr() : ConsoleTargetBase(stderr) {
         }
 
-        ~ConsoleSinkStderr() override = default;
+        ~ConsoleTargetStderr() override = default;
+        static std::shared_ptr<TargetBase> create() {
+            static std::shared_ptr<TargetBase> sink(new(std::nothrow) ConsoleTargetStderr());
+            return sink;
+        }
+    };
+
+    class ColorConsoleTargetBase : public TargetBase {
+    public:
+        ColorConsoleTargetBase(FILE *file) : _file{file} {
+        }
+
+        ~ColorConsoleTargetBase() override = default;
+
+        turbo::Status initialize(const TargetOptions &base) override {
+            TURBO_UNUSED(base);
+            return turbo::OkStatus();
+        }
+
+        turbo::Status shutdown() override {
+            return turbo::OkStatus();
+        }
+
+        void apply_log(LogLevel l, turbo::Time stamp, const char *data, size_t len) override;
+
+    private:
+        FILE *_file{nullptr};
+    };
+
+    class ColorConsoleTargetStdout : public ColorConsoleTargetBase {
+    public:
+        ColorConsoleTargetStdout() : ColorConsoleTargetBase(stdout) {
+        }
+
+        ~ColorConsoleTargetStdout() override = default;
+
+        static std::shared_ptr<TargetBase> create() {
+            static std::shared_ptr<TargetBase> sink(new(std::nothrow) ColorConsoleTargetStdout());
+            return sink;
+        }
+
+    };
+
+    class ColorConsoleTargetStderr : public ColorConsoleTargetBase {
+    public:
+        ColorConsoleTargetStderr() : ColorConsoleTargetBase(stderr) {
+        }
+
+        ~ColorConsoleTargetStderr() override = default;
+        static std::shared_ptr<TargetBase> create() {
+            static std::shared_ptr<TargetBase> sink(new(std::nothrow) ColorConsoleTargetStderr());
+            return sink;
+        }
     };
 
 } // namespace heaton
