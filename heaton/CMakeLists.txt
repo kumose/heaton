@@ -49,17 +49,4 @@ kmcmake_cc_library(
         PUBLIC
 )
 
-kmcmake_cc_binary(
-        NAMESPACE ${PROJECT_NAME}
-        NAME tlog
-        SOURCES
-        tlog.cc
-        CXXOPTS
-        ${KMCMAKE_CXX_OPTIONS}
-        LINKS
-        heaton::heaton_static
-        ${KMCMAKE_DEPS_LINK}
-        PUBLIC
-)
-
 ###kmcmake_example

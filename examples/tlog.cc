@@ -13,17 +13,20 @@
 // limitations under the License.
 //
 
-#include <heaton/sink.h>
+#include <heaton/heaton.h>
 #include <heaton/glog.h>
 #include <turbo/log/logging.h>
 
 int main(int argc, char **argv) {
-    heaton::SinkOption option(argv[0]);
-    option.type = heaton::SinkType::SINK_ASYNC_FILE;
+    heaton::HeatonOption option(argv[0]);
+    option.upstream.enable_absl = true;
+    option.upstream.enable_turbo = true;
+    option.upstream.enable_glog = true;
     option.create_if_missing = true;
-    option.options.global_option.log_type = heaton::TargetType::TARGET_DAILY;
-    option.options.global_option.filename = "logs/tlog.txt";
-    auto rs = heaton::SinkProxy::get_instance()->initialize(option);
+    option.global.type = heaton::SinkType::SINK_ASYNC_FILE;
+    option.global.target.target_type = heaton::TargetType::TARGET_DAILY;
+    option.global.target.filename = "logs/tlog.txt";
+    auto rs = heaton::Heaton::get_instance()->initialize(option);
     std::cerr<<rs.to_string()<<std::endl;
     if (!rs.ok()) {
         return 1;
