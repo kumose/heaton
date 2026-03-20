@@ -13,8 +13,43 @@ heaton
 
 [English](./README.md)
 
+Heaton 是一个为现代 C++ 构建的高性能、非侵入式日志管理交换机。它通过 Upstream (采集) -> Dispatch (路由) -> Sink (缓冲) -> Target (落盘) 的四层解耦架构，强行统一了 GLog、Abseil 和 Turbo 的日志流，并提供工业级的自动运维能力。
+🚀 核心价值
 
-heaton 项目说明
+* 多源合一 (Unified Upstream)：通过 Upstream 拦截技术，无感接管 GLog、Abseil 和 Turbo 的日志输出，将碎片化的日志归一化为统一的时序流。
+* 极致性能 (Zero-copy Dispatch)：在同步路径下实现零拷贝转发；在异步路径下利用 Swap 缓冲区 和 状态机信号抑制 技术，将系统调用（Syscall）开销压低至极致。
+* 工业级自愈 (Self-healing Target)：内置 Daily/Hourly/Rotating 轮转策略，支持目录自动创建、磁盘满退避重试以及历史日志自动清理。
+* 非侵入式接入：无需修改已有业务代码中的 LOG(INFO)，只需在 main 函数一行初始化，即可接管全局日志治理。
+
+```mermaid
+flowchart LR
+    A[APP] --> B[GLOG transfer]
+    A[APP] --> C[ABSL transfer]
+    A[APP] --> D[TURBO transfer]
+    B --> E[dispatcher]
+    C --> E[dispatcher]
+    D --> E[dispatcher]
+    E -->|INFO| GS[sink/async]
+    E -->|WARN| GS
+    E -->|ERROR| GS
+    E -->|FATAL| GS
+    E -->|ERROR| ES[error]
+    E -->|FATAL| ES[error]
+    GS -->|console| CT[target]
+    GS -->|file| FT[target]
+    GS -->|kafka| KT[target]
+```
+
+### 特点
+
+| 特性 | 实现细节 |
+|---|---|
+| 异步泵 | 基于 std::deque + swap 指针交换，锁竞争耗时恒定在纳秒级。 |
+| 信号抑制 | 状态机识别 kWorking 状态，自动屏蔽无效的 condition_variable 通知。 |
+| 内存控制 | 严格遵循右值引用移动语义，确保异步分发过程中零二次拷贝。 |
+| 运维闭环 | 重启时自动扫描磁盘存量文件，重建 circular_queue 管理生命周期。 |
+| 错误治理 | 全流程采用 turbo::Status 返回值，拒绝异常，二进制兼容性极强。 |
+
 
 ## 🛠️ Build
 
@@ -68,4 +103,32 @@ make -j$(nproc)
 
 ```shell
 ctest --test-dir build
+```
+
+## 例子
+
+```c++
+#include <heaton/heaton.h>
+#include <heaton/glog.h>
+#include <turbo/log/logging.h>
+
+int main(int argc, char **argv) {
+    heaton::HeatonOption option(argv[0]);
+    option.upstream.enable_absl = true;
+    option.upstream.enable_turbo = true;
+    option.upstream.enable_glog = true;
+    option.create_if_missing = true;
+    option.global.type = heaton::SinkType::SINK_ASYNC_FILE;
+    option.global.target.target_type = heaton::TargetType::TARGET_DAILY;
+    option.global.target.filename = "logs/tlog.txt";
+    auto rs = heaton::Heaton::get_instance()->initialize(option);
+    std::cerr<<rs.to_string()<<std::endl;
+    if (!rs.ok()) {
+        return 1;
+    }
+    ABSL_LOG(INFO)<<"absl log";
+    KLOG(INFO)<<"turbo log";
+    LOG(INFO)<<"glog log";
+    return 0;
+}
 ```

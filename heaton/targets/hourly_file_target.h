@@ -15,20 +15,20 @@
 
 #pragma once
 
-#include <heaton/file_target_base.h>
+#include <heaton/target_base.h>
 #include <turbo/times/time.h>
 #include <turbo/container/circular_queue.h>
 #include <heaton/utility/log_filename.h>
 
 namespace heaton {
     /// leave the multi thread gard for caller sinks proxy eg turbo,glog, absl.
-    class HourlyFileTarget : public FileTargetBase {
+    class HourlyFileTarget : public TargetBase {
     public:
         HourlyFileTarget();
 
         ~HourlyFileTarget() override;
 
-        turbo::Status initialize(const FileTargetOptions &base) override;
+        turbo::Status initialize(const TargetOptions &base) override;
 
         void apply_log(LogLevel l, turbo::Time stamp, const char *data, size_t len) override;
 

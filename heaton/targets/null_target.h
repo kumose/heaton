@@ -15,18 +15,23 @@
 
 #pragma once
 
-#include <heaton/file_target_base.h>
+#include <heaton/target_base.h>
 #include <array>
 
 namespace heaton {
 
-    class NullTarget : public FileTargetBase {
+    class NullTarget : public TargetBase {
     public:
         NullTarget() = default;
 
         ~NullTarget() override =   default;
 
-        turbo::Status initialize(const FileTargetOptions &base) override {
+        static std::shared_ptr<TargetBase> create() {
+            static std::shared_ptr<TargetBase> target;
+            return target;
+        }
+
+        turbo::Status initialize(const TargetOptions &base) override {
             return turbo::OkStatus();
         }
 
@@ -46,10 +51,10 @@ namespace heaton {
     };
 
     template <size_t N>
-    std::array<FileTargetBase*, N> get_null_target_array() {
-        static std::array<FileTargetBase*, N> arr;
+    std::array<TargetBase*, N> get_null_target_array() {
+        static std::array<TargetBase*, N> arr;
         for (size_t i = 0; i < N; i++) {
-            arr[i] = static_cast<FileTargetBase*>(NullTarget::get_instance());
+            arr[i] = static_cast<TargetBase*>(NullTarget::get_instance());
         }
         return arr;
     }

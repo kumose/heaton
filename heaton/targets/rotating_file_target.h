@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <heaton/file_target_base.h>
+#include <heaton/target_base.h>
 #include <turbo/times/time.h>
 #include <turbo/log/internal/append_file.h>
 #include <turbo/container/circular_queue.h>
@@ -23,15 +23,20 @@
 
 namespace heaton {
 
-
+    ///////////////////////////////////////////////////////////////////////////////
     /// leave the multi thread gard for caller sinks proxy eg turbo,glog, absl.
-    class RotatingFileTarget : public FileTargetBase {
+    /// RotatingFileTarget is a output target, that file will be cut by max_file_size,
+    /// if current_file_size + msg_size >  max_file_size, it will close file and move
+    /// current file to file queue. if file queue reach max_files, oldest file will be remove.
+    /// caution that, if you have reconfig the max_files to smaller, do forget to remove the file
+    /// sequence the leaves.
+    class RotatingFileTarget : public TargetBase {
     public:
         RotatingFileTarget();
 
         ~RotatingFileTarget() override;
 
-        turbo::Status initialize(const FileTargetOptions &base) override;
+        turbo::Status initialize(const TargetOptions &base) override;
 
         void apply_log(LogLevel l, turbo::Time stamp, const char *data, size_t len) override;
 

@@ -13,15 +13,19 @@
 // limitations under the License.
 //
 
-#include <heaton/file_target_base.h>
+#include <heaton/target_base.h>
 #include <turbo/files/filesystem.h>
-
+#include <heaton/targets/null_target.h>
+#include <heaton/targets/console_target.h>
+#include <heaton/targets/daily_file_target.h>
+#include <heaton/targets/hourly_file_target.h>
+#include <heaton/targets/rotating_file_target.h>
 
 namespace heaton {
 
-    const turbo::Time FileTargetBase::kZero;
+    const turbo::Time TargetBase::kZero;
 
-    void FileTargetBase::reopen_writer(turbo::Time stamp) {
+    void TargetBase::reopen_writer(turbo::Time stamp) {
         auto now = turbo::Time::current_time();
         if (_next_reopen_time != kZero && now < _next_reopen_time) {
             return;
@@ -46,7 +50,7 @@ namespace heaton {
         _next_reopen_time = turbo::Time();
     }
 
-    void FileTargetBase::check_file(turbo::Time stamp) {
+    void TargetBase::check_file(turbo::Time stamp) {
         bool need_reopen = true;
         if (_file_writer == nullptr) {
             reopen_writer(stamp);
@@ -71,11 +75,45 @@ namespace heaton {
         }
     }
 
-    turbo::Time FileTargetBase::next_check_time(turbo::Time stamp) const {
+    turbo::Time TargetBase::next_check_time(turbo::Time stamp) const {
         if (_options.check_interval_s == 0) {
             return turbo::Time::from_time_t(0);
         }
         return stamp + turbo::Duration::seconds(_options.check_interval_s);
     }
 
+    turbo::Result<std::shared_ptr<TargetBase>> TargetBase::create_target(TargetOptions option) {
+        std::shared_ptr<TargetBase> target;
+        switch (option.target_type) {
+            case TargetType::TARGET_NULL:
+                target = NullTarget::create();
+                break;
+            case TargetType::TARGET_STDERR:
+                target = ConsoleTargetStderr::create();
+                break;
+            case TargetType::TARGET_STDOUT:
+                target = ConsoleTargetStdout::create();
+                break;
+            case TargetType::TARGET_COLOR_STDERR:
+                target = ColorConsoleTargetStderr::create();
+                break;
+            case TargetType::TARGET_COLOR_STDOUT:
+                target = ColorConsoleTargetStdout::create();
+                break;
+            case TargetType::TARGET_DAILY:
+                target = std::make_shared<DailyFileTarget>();
+                TURBO_RETURN_NOT_OK(target->initialize(option));
+                break;
+            case TargetType::TARGET_HOURLY:
+                target = std::make_shared<HourlyFileTarget>();
+                TURBO_RETURN_NOT_OK(target->initialize(option));
+                break;
+            case TargetType::TARGET_ROTATING:
+                target = std::make_shared<RotatingFileTarget>();
+                TURBO_RETURN_NOT_OK(target->initialize(option));
+                break;
+
+        }
+        return target;
+    }
 }  // namespace heaton

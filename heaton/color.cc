@@ -13,17 +13,21 @@
 // limitations under the License.
 //
 
-
-#include <heaton/targets/file_target.h>
+#include <heaton/color.h>
 
 namespace heaton {
 
-    void FileTarget::apply_log(LogLevel l, turbo::Time stamp, const char *data, size_t len) {
-        rotate_file(stamp);
-        if (_file_writer == nullptr) {
-            return;
-        }
-        // Write to the current file
-        _file_writer->write(std::string_view(data, len));
-    }
+    std::array<std::string_view, 10> ConsoleColor::colors_map = {
+        green, // kInfo
+        yellow_bold, // kWarning
+        red_bold, // kError
+        bold_on_red, // kFatal
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+    };
+
 }  // namespace heaton

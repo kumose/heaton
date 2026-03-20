@@ -15,40 +15,36 @@
 
 #pragma once
 
+#include <heaton/sink_base.h>
 #include <heaton/target_base.h>
-#include <turbo/times/time.h>
-#include <turbo/log/internal/append_file.h>
-#include <turbo/container/circular_queue.h>
-#include <heaton/utility/log_filename.h>
+#include <heaton/targets/null_target.h>
 
 namespace heaton {
 
-
-    /// leave the multi thread gard for caller sinks proxy eg turbo,glog, absl.
-    class DailyFileTarget : public TargetBase {
+    /// Sync Sinks
+    class SyncSink : public SinkBase {
     public:
-        DailyFileTarget();
+        SyncSink() = default;
 
-        ~DailyFileTarget() override;
+        ~SyncSink() override = default;
 
-        turbo::Status initialize(const TargetOptions &base) override;
+        turbo::Status initialize(const SinkOption &op, std::shared_ptr<TargetBase> &target) override;
 
+        /// dispatch no transfer log, to avoid copy.
         void apply_log(LogLevel l, turbo::Time stamp, const char *data, size_t len) override;
+
+        /// dispatch reformated and allocated log, using move to avoid copy
+        void apply_log(LogLevel l, turbo::Time stamp, std::string &&msg) override;
 
         void flush() override;
 
-        turbo::Status shutdown() override {
-            shutting_down = true;
-            return turbo::Status();
-        }
+        /// mark shutdown and
+        /// reset target to null_target, so, it
+        /// avoid if branch.
+        void shutdown() override;
 
     private:
-        turbo::Time next_rotation_time(turbo::Time stamp) const;
-        void init_file_queue(turbo::Time time);
-        void rotate_file(turbo::Time stamp);
-
-    private:
-        turbo::Time _next_rotation_time;
-        turbo::circular_queue<std::string> _files;
+        std::shared_ptr<TargetBase> _target{NullTarget::create()};
+        bool _shutting_down = false;
     };
 }  // namespace heaton

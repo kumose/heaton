@@ -14,12 +14,20 @@
 //
 
 #include <heaton/targets/console_target.h>
+#include <heaton/color.h>
 
 namespace heaton {
 
     void ConsoleTargetBase::apply_log(LogLevel l, turbo::Time stamp, const char *data, size_t len) {
-        std::unique_lock lk(_mutex);
-        TURBO_UNUSED(::fwrite(data, 1, len, _file));
+        TURBO_UNUSED(::fwrite(data, len, 1, _file));
+    }
+
+    void ColorConsoleTargetBase::apply_log(LogLevel l, turbo::Time stamp, const char *data, size_t len) {
+        auto color = ConsoleColor::colors_map[static_cast<int>(l)];
+        turbo::StringBuilder builder;
+        builder << color << std::string_view(data, len) << ConsoleColor::reset;
+        auto msg = builder.str();
+        TURBO_UNUSED(::fwrite(msg.data(), msg.size(), 1, _file));
     }
 
 }  // namespace heaton

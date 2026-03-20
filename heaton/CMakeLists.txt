@@ -19,17 +19,22 @@
 
 set(HEATON_SRC
         log_entity.cc
-        file_target_base.cc
+        target_base.cc
         heaton.cc
-        sink.cc
-        sinks/color_sink.cc
-        sinks/file_sink.cc
-        sinks/async_file_sink.cc
+        sink_base.cc
+        dispatch.cc
+        color.cc
+        upstream_base.cc
+        sinks/sync_sink.cc
+        sinks/async_sink.cc
         targets/console_target.cc
         targets/daily_file_target.cc
         targets/hourly_file_target.cc
         targets/rotating_file_target.cc
         utility/log_filename.cc
+        upstream/turbo.cc
+        upstream/glog.cc
+        upstream/absl.cc
 )
 
 kmcmake_cc_library(
@@ -40,6 +45,19 @@ kmcmake_cc_library(
         CXXOPTS
         ${KMCMAKE_CXX_OPTIONS}
         PLINKS
+        ${KMCMAKE_DEPS_LINK}
+        PUBLIC
+)
+
+kmcmake_cc_binary(
+        NAMESPACE ${PROJECT_NAME}
+        NAME tlog
+        SOURCES
+        tlog.cc
+        CXXOPTS
+        ${KMCMAKE_CXX_OPTIONS}
+        LINKS
+        heaton::heaton_static
         ${KMCMAKE_DEPS_LINK}
         PUBLIC
 )
